@@ -14,6 +14,7 @@ import {
   onValue,
   set,
   push,
+  remove,
   serverTimestamp,
   onDisconnect,
   get
@@ -27,18 +28,19 @@ const app = initializeApp(FIREBASE_CONFIG);
 const auth = getAuth(app);
 const db = getDatabase(app);
 
-// State
 let myName = sessionStorage.getItem('cdName') || 'Anonymous';
 let myRole = sessionStorage.getItem('cdRole') || 'viewer';
 let isAdmin = myRole === 'admin';
-let isSyncing = false; // Flag agar tidak infinite-loop sync
+let isSyncing = false;
 let typingTimeout = null;
 
+// Local deleted message keys (for "delete for me")
+const LOCAL_DELETED_KEY = `cd_deleted_${ROOM_ID}`;
+let localDeletedIds = new Set(JSON.parse(localStorage.getItem(LOCAL_DELETED_KEY) || '[]'));
+
 // Firebase Refs
-const roomRef = ref(db, `rooms/${ROOM_ID}`);
 const videoStateRef = ref(db, `rooms/${ROOM_ID}/videoState`);
 const chatRef = ref(db, `rooms/${ROOM_ID}/chat`);
-const presenceRef = ref(db, `rooms/${ROOM_ID}/presence`);
 const reactionsRef = ref(db, `rooms/${ROOM_ID}/reactions`);
 const typingRef = ref(db, `rooms/${ROOM_ID}/typing`);
 
@@ -56,6 +58,7 @@ const fullscreenBtn = document.getElementById('fullscreenBtn');
 const chatMessages = document.getElementById('chatMessages');
 const chatInput = document.getElementById('chatInput');
 const chatSendBtn = document.getElementById('chatSendBtn');
+const chatClearBtn = document.getElementById('chatClearBtn');
 const bigHeartBtn = document.getElementById('bigHeartBtn');
 const popcornBtn = document.getElementById('popcornBtn');
 const partnerDot = document.getElementById('partnerDot');
@@ -73,17 +76,15 @@ const movieTitleText = document.getElementById('movieTitleText');
 // SETUP UI
 // ================================================================
 function setupUI() {
-  // Set video source
   video.src = VIDEO_URL;
   movieTitleText.textContent = MOVIE_TITLE;
 
-  // Role UI
   if (isAdmin) {
     roleBadge.textContent = '🎮 Admin';
     roleBadge.classList.add('admin');
     document.body.classList.remove('is-viewer');
   } else {
-    roleBadge.textContent = '💕 Viewer';
+    roleBadge.textContent = '💕 Penonton';
     document.body.classList.add('is-viewer');
     lockControls(true);
   }
@@ -101,15 +102,9 @@ function setupUI() {
 }
 
 function lockControls(locked) {
-  const ctrls = [playPauseBtn, skipBackBtn, skipFwdBtn];
-  ctrls.forEach(btn => {
-    if (locked) {
-      btn.classList.add('locked');
-      btn.disabled = true;
-    } else {
-      btn.classList.remove('locked');
-      btn.disabled = false;
-    }
+  [playPauseBtn, skipBackBtn, skipFwdBtn].forEach(btn => {
+    btn.classList.toggle('locked', locked);
+    btn.disabled = locked;
   });
   progressBarWrapper.style.pointerEvents = locked ? 'none' : 'auto';
 }
@@ -117,8 +112,6 @@ function lockControls(locked) {
 // ================================================================
 // VIDEO CONTROLS (ADMIN ONLY)
 // ================================================================
-
-// Play/Pause button
 playPauseBtn.addEventListener('click', () => {
   if (!isAdmin) return;
   if (video.paused) {
@@ -130,11 +123,9 @@ playPauseBtn.addEventListener('click', () => {
   }
 });
 
-// Update button icon on video state change
 video.addEventListener('play', () => { playPauseBtn.textContent = '⏸'; });
 video.addEventListener('pause', () => { playPauseBtn.textContent = '▶'; });
 
-// Skip buttons
 skipBackBtn.addEventListener('click', () => {
   if (!isAdmin) return;
   const t = Math.max(0, video.currentTime - 10);
@@ -149,22 +140,40 @@ skipFwdBtn.addEventListener('click', () => {
   pushVideoState({ playing: !video.paused, currentTime: t });
 });
 
-// Progress bar click (admin seek)
+// Progress bar — support both click and touch
 progressBarWrapper.addEventListener('click', (e) => {
   if (!isAdmin) return;
+  seekFromEvent(e.clientX);
+});
+
+// Touch drag for progress bar
+let isDraggingProgress = false;
+progressBarWrapper.addEventListener('touchstart', (e) => {
+  if (!isAdmin) return;
+  isDraggingProgress = true;
+}, { passive: true });
+progressBarWrapper.addEventListener('touchmove', (e) => {
+  if (!isAdmin || !isDraggingProgress) return;
+  seekFromEvent(e.touches[0].clientX);
+}, { passive: true });
+progressBarWrapper.addEventListener('touchend', () => {
+  if (!isAdmin) return;
+  isDraggingProgress = false;
+  pushVideoState({ playing: !video.paused, currentTime: video.currentTime });
+});
+
+function seekFromEvent(clientX) {
   const rect = progressBarWrapper.getBoundingClientRect();
-  const ratio = (e.clientX - rect.left) / rect.width;
+  const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
   const t = ratio * (video.duration || 0);
   video.currentTime = t;
   pushVideoState({ playing: !video.paused, currentTime: t });
-});
+}
 
-// Volume
 volumeSlider.addEventListener('input', () => {
   video.volume = volumeSlider.value;
 });
 
-// Time update → update progress bar
 video.addEventListener('timeupdate', () => {
   const dur = video.duration || 0;
   const cur = video.currentTime;
@@ -179,7 +188,6 @@ video.addEventListener('loadedmetadata', () => {
   timeDurationDisplay.textContent = formatTime(video.duration);
 });
 
-// Fullscreen
 fullscreenBtn.addEventListener('click', () => {
   if (document.fullscreenElement) {
     document.exitFullscreen();
@@ -205,33 +213,27 @@ function pushVideoState(state) {
 }
 
 // ================================================================
-// LISTEN TO VIDEO STATE (Both admin & viewer)
+// LISTEN TO VIDEO STATE
 // ================================================================
 onValue(videoStateRef, (snapshot) => {
-  if (isSyncing) return; // Admin sedang push, skip listener
-
+  if (isSyncing) return;
   const state = snapshot.val();
   if (!state) return;
 
   const diff = Math.abs(video.currentTime - state.currentTime);
 
-  // Sync waktu jika selisih > 2 detik
   if (diff > 2) {
     showSyncOverlay(true);
     video.currentTime = state.currentTime;
-    video.addEventListener('seeked', () => {
-      showSyncOverlay(false);
-    }, { once: true });
+    video.addEventListener('seeked', () => { showSyncOverlay(false); }, { once: true });
   }
 
-  // Sync play/pause
   if (state.playing && video.paused) {
     video.play().catch(() => {});
   } else if (!state.playing && !video.paused) {
     video.pause();
   }
 
-  // Update sync status display
   syncStatusDisplay.textContent = diff < 2 ? 'Tersinkron ✓' : 'Menyinkronkan...';
   syncStatusDisplay.className = 'sync-value ' + (diff < 2 ? 'good' : 'warn');
 });
@@ -246,7 +248,6 @@ function showSyncOverlay(visible) {
 function setupPresence() {
   const myPresenceRef = ref(db, `rooms/${ROOM_ID}/presence/${myRole}`);
 
-  // Set online
   set(myPresenceRef, {
     name: myName,
     role: myRole,
@@ -254,7 +255,6 @@ function setupPresence() {
     lastSeen: serverTimestamp()
   });
 
-  // Auto set offline on disconnect
   onDisconnect(myPresenceRef).set({
     name: myName,
     role: myRole,
@@ -262,7 +262,6 @@ function setupPresence() {
     lastSeen: serverTimestamp()
   });
 
-  // Listen to partner status
   const partnerRole = isAdmin ? 'viewer' : 'admin';
   const partnerRef = ref(db, `rooms/${ROOM_ID}/presence/${partnerRole}`);
 
@@ -270,7 +269,7 @@ function setupPresence() {
     const data = snapshot.val();
     if (data && data.online) {
       partnerDot.className = 'status-dot online';
-      partnerNameEl.textContent = `${data.name} — Online 💚`;
+      partnerNameEl.textContent = `${data.name} — Online`;
       connStatusDisplay.textContent = 'Online 🟢';
       connStatusDisplay.className = 'sync-value good';
     } else {
@@ -285,17 +284,27 @@ function setupPresence() {
 // ================================================================
 // CHAT
 // ================================================================
+
+// Store current message keys with their data for delete functionality
+let currentMessages = {}; // { firebaseKey: msgData }
+
 function setupChat() {
   // Listen to chat messages
   onValue(chatRef, (snapshot) => {
     const data = snapshot.val();
+
+    // Clear rendered messages
+    chatMessages.querySelectorAll('.chat-msg').forEach(el => el.remove());
+
     if (!data) return;
 
-    // Clear and re-render (for simplicity; in prod use child_added)
-    const msgEls = chatMessages.querySelectorAll('.chat-msg');
-    msgEls.forEach(el => el.remove());
+    currentMessages = data;
 
-    const msgs = Object.values(data).sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+    const msgs = Object.entries(data)
+      .map(([key, val]) => ({ key, ...val }))
+      .filter(msg => !localDeletedIds.has(msg.key))
+      .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+
     msgs.forEach(msg => renderChatMessage(msg));
     chatMessages.scrollTop = chatMessages.scrollHeight;
   });
@@ -303,13 +312,12 @@ function setupChat() {
   // Send button
   chatSendBtn.addEventListener('click', sendMessage);
 
-  // Enter to send (Shift+Enter for newline)
+  // Enter to send
   chatInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
     }
-    // Typing indicator
     clearTimeout(typingTimeout);
     set(typingRef, { user: myName, typing: true });
     typingTimeout = setTimeout(() => {
@@ -317,7 +325,7 @@ function setupChat() {
     }, 2000);
   });
 
-  // Listen to typing
+  // Typing listener
   onValue(typingRef, (snapshot) => {
     const data = snapshot.val();
     if (data && data.typing && data.user !== myName) {
@@ -330,7 +338,12 @@ function setupChat() {
   // Auto-resize textarea
   chatInput.addEventListener('input', () => {
     chatInput.style.height = 'auto';
-    chatInput.style.height = Math.min(chatInput.scrollHeight, 100) + 'px';
+    chatInput.style.height = Math.min(chatInput.scrollHeight, 96) + 'px';
+  });
+
+  // Clear chat button
+  chatClearBtn.addEventListener('click', () => {
+    showClearChatModal();
   });
 }
 
@@ -358,28 +371,145 @@ function renderChatMessage(msg) {
 
   const div = document.createElement('div');
   div.className = `chat-msg ${isSystem ? 'is-system' : isMe ? 'is-mine' : 'is-theirs'}`;
+  div.dataset.key = msg.key;
 
-  const time = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '';
+  const time = msg.timestamp
+    ? new Date(msg.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+    : '';
 
   if (!isSystem) {
     div.innerHTML = `
-      <div class="chat-msg-name">${isMe ? 'Kamu' : escapeHtml(msg.name)}</div>
+      <div class="chat-msg-name">${isMe ? 'Anda' : escapeHtml(msg.name)}</div>
       <div class="chat-msg-bubble">${escapeHtml(msg.text)}</div>
       <div class="chat-msg-time">${time}</div>
+      <button class="chat-msg-delete" data-key="${msg.key}" title="Hapus pesan">Hapus</button>
     `;
   } else {
     div.innerHTML = `<div class="chat-msg-bubble">${escapeHtml(msg.text)}</div>`;
   }
 
-  // Insert before typing indicator
+  // Delete button logic
+  const deleteBtn = div.querySelector('.chat-msg-delete');
+  if (deleteBtn) {
+    deleteBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const key = deleteBtn.dataset.key;
+      showDeleteMessageModal(key, isMe);
+    });
+  }
+
   chatMessages.insertBefore(div, typingIndicator);
+}
+
+// ================================================================
+// CHAT DELETE FUNCTIONALITY
+// ================================================================
+
+function showDeleteMessageModal(msgKey, isMyMessage) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+
+  const actions = isMyMessage
+    ? `
+      <button class="modal-btn danger" id="deleteForAll">Hapus untuk Semua</button>
+      <button class="modal-btn danger" id="deleteForMe">Hapus untuk Saya</button>
+      <button class="modal-btn" id="cancelDelete">Batal</button>
+    `
+    : `
+      <button class="modal-btn danger" id="deleteForMe">Hapus untuk Saya</button>
+      <button class="modal-btn" id="cancelDelete">Batal</button>
+    `;
+
+  overlay.innerHTML = `
+    <div class="modal-card">
+      <div class="modal-title">Hapus Pesan</div>
+      <div class="modal-desc">
+        ${isMyMessage
+          ? 'Pilih opsi penghapusan. "Hapus untuk Semua" akan menghapus pesan dari semua pengguna.'
+          : 'Pesan ini hanya akan dihapus dari tampilan Anda.'
+        }
+      </div>
+      <div class="modal-actions" style="flex-direction:column; gap:8px;">
+        ${actions}
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  overlay.querySelector('#cancelDelete')?.addEventListener('click', () => overlay.remove());
+
+  overlay.querySelector('#deleteForAll')?.addEventListener('click', () => {
+    const msgRef = ref(db, `rooms/${ROOM_ID}/chat/${msgKey}`);
+    remove(msgRef);
+    overlay.remove();
+  });
+
+  overlay.querySelector('#deleteForMe')?.addEventListener('click', () => {
+    localDeletedIds.add(msgKey);
+    localStorage.setItem(LOCAL_DELETED_KEY, JSON.stringify([...localDeletedIds]));
+    const el = chatMessages.querySelector(`[data-key="${msgKey}"]`);
+    if (el) el.remove();
+    overlay.remove();
+  });
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) overlay.remove();
+  });
+}
+
+function showClearChatModal() {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+
+  const adminOptions = isAdmin
+    ? `<button class="modal-btn danger" id="clearForAll">Hapus untuk Semua</button>`
+    : '';
+
+  overlay.innerHTML = `
+    <div class="modal-card">
+      <div class="modal-title">Hapus Riwayat Percakapan</div>
+      <div class="modal-desc">
+        ${isAdmin
+          ? '"Hapus untuk Semua" akan menghapus seluruh percakapan dari database. "Hapus untuk Saya" hanya menyembunyikan pesan di perangkat Anda.'
+          : 'Seluruh riwayat percakapan akan disembunyikan di perangkat Anda.'
+        }
+      </div>
+      <div class="modal-actions" style="flex-direction:column; gap:8px;">
+        ${adminOptions}
+        <button class="modal-btn danger" id="clearForMe">Hapus untuk Saya</button>
+        <button class="modal-btn" id="cancelClear">Batal</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  overlay.querySelector('#cancelClear')?.addEventListener('click', () => overlay.remove());
+
+  overlay.querySelector('#clearForAll')?.addEventListener('click', () => {
+    if (!isAdmin) return;
+    remove(chatRef);
+    overlay.remove();
+  });
+
+  overlay.querySelector('#clearForMe')?.addEventListener('click', () => {
+    // Add all current message keys to local deleted list
+    Object.keys(currentMessages).forEach(key => localDeletedIds.add(key));
+    localStorage.setItem(LOCAL_DELETED_KEY, JSON.stringify([...localDeletedIds]));
+    chatMessages.querySelectorAll('.chat-msg').forEach(el => el.remove());
+    overlay.remove();
+  });
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) overlay.remove();
+  });
 }
 
 // ================================================================
 // HEARTS & REACTIONS
 // ================================================================
 function setupReactions() {
-  // Big heart button
   bigHeartBtn.addEventListener('click', () => {
     triggerHearts(15);
     push(reactionsRef, {
@@ -390,23 +520,21 @@ function setupReactions() {
     showToast(`${myName} mengirim ❤️❤️❤️`);
   });
 
-  // Popcorn button
   popcornBtn.addEventListener('click', () => {
     push(chatRef, {
       name: myName,
       type: 'system',
-      text: `🍿 ${myName} minta jeda popcorn!`,
+      text: `🍿 ${myName} meminta jeda sebentar`,
       timestamp: serverTimestamp()
     });
-    // Also pause video if admin
     if (isAdmin) {
       video.pause();
       pushVideoState({ playing: false, currentTime: video.currentTime });
     }
-    showToast('🍿 Jeda popcorn diminta!');
+    showToast('🍿 Permintaan jeda terkirim!');
   });
 
-  // Mood buttons
+  // Mood buttons — emoji only
   document.querySelectorAll('.mood-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const mood = btn.dataset.mood;
@@ -416,12 +544,8 @@ function setupReactions() {
         mood: mood,
         timestamp: serverTimestamp()
       });
-      push(chatRef, {
-        name: myName,
-        type: 'system',
-        text: `${myName}: ${mood}`,
-        timestamp: serverTimestamp()
-      });
+      spawnSingleEmoji(mood);
+      showToast(`${myName} bereaksi ${mood}`);
     });
   });
 
@@ -435,11 +559,11 @@ function setupReactions() {
         emoji: emoji,
         timestamp: serverTimestamp()
       });
+      spawnSingleEmoji(emoji);
     });
   });
 
-  // Listen to reactions from partner
-  // Use child_added for new reactions only
+  // Listen to partner reactions
   let reactionsLoaded = false;
   onValue(reactionsRef, (snapshot) => {
     if (!reactionsLoaded) { reactionsLoaded = true; return; }
@@ -456,17 +580,15 @@ function setupReactions() {
       showToast(`${latest.from}: ${latest.emoji}`);
       spawnSingleEmoji(latest.emoji);
     } else if (latest.type === 'mood') {
-      showToast(`${latest.from}: ${latest.mood}`);
+      showToast(`${latest.from} bereaksi ${latest.mood}`);
+      spawnSingleEmoji(latest.mood);
     }
   });
 }
 
 function triggerHearts(count = 10) {
   const wrapper = document.querySelector('.video-wrapper');
-  const wRect = wrapper.getBoundingClientRect();
-
   const heartEmojis = ['❤️', '🧡', '💕', '💝', '💖', '💗', '💓', '💞', '🌹'];
-
   for (let i = 0; i < count; i++) {
     setTimeout(() => {
       const heart = document.createElement('div');
@@ -524,49 +646,41 @@ function escapeHtml(str) {
 }
 
 // ================================================================
-// BOOT — Check Auth then Init
+// BOOT
 // ================================================================
 onAuthStateChanged(auth, (user) => {
   if (!user) {
-    // Not logged in, redirect
     window.location.href = 'index.html';
     return;
   }
 
-  // Logged in — initialize everything
   setupUI();
   setupPresence();
   setupChat();
   setupReactions();
 
-  // Push system message that user joined
   push(chatRef, {
     name: myName,
     type: 'system',
-    text: `${myName} bergabung ke bioskop 🎬`,
+    text: `${myName} bergabung ke ruang nonton 🎬`,
     timestamp: serverTimestamp()
   });
 
-  // If admin and video is playing, resync on join
   if (!isAdmin) {
-    // Viewer: get current state immediately
     get(videoStateRef).then((snapshot) => {
       const state = snapshot.val();
       if (state) {
         video.currentTime = state.currentTime;
-        if (state.playing) {
-          video.play().catch(() => {});
-        }
+        if (state.playing) video.play().catch(() => {});
       }
     });
   }
 });
 
-// Admin: periodically sync video position so viewer stays in sync
+// Admin: periodic sync
 if (isAdmin) {
   setInterval(() => {
     if (!video.paused && !isSyncing) {
-      // Soft sync every 5 seconds
       set(videoStateRef, {
         playing: true,
         currentTime: video.currentTime,

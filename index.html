@@ -2,17 +2,15 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>CinemaDate 🎬</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
-  <!-- Animated background particles -->
   <div class="bg-particles" id="bgParticles"></div>
 
-  <!-- Floating film strip decoration -->
   <div class="film-strip film-strip-left">
     <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
     <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
@@ -28,17 +26,15 @@
 
   <main class="login-container">
     <div class="login-card">
-      <!-- Logo -->
       <div class="logo">
         <span class="logo-icon">🎬</span>
         <h1 class="logo-text">Cinema<em>Date</em></h1>
-        <p class="logo-tagline">Nonton bareng, walau jauh di mata 💕</p>
+        <p class="logo-tagline">Menonton bersama, meski terpisah jarak 💕</p>
       </div>
 
-      <!-- Login Form -->
       <form id="loginForm" class="login-form">
         <div class="form-group">
-          <label for="nameInput">Nama kamu</label>
+          <label for="nameInput">Nama Anda</label>
           <input
             type="text"
             id="nameInput"
@@ -50,17 +46,17 @@
         </div>
 
         <div class="form-group">
-          <label for="roleSelect">Masuk sebagai</label>
+          <label>Masuk Sebagai</label>
           <div class="role-selector">
             <button type="button" class="role-btn active" data-role="viewer">
               <span class="role-icon">💕</span>
-              <span class="role-label">Viewer</span>
-              <span class="role-desc">Nonton bareng</span>
+              <span class="role-label">Penonton</span>
+              <span class="role-desc">Menonton bersama</span>
             </button>
             <button type="button" class="role-btn" data-role="admin">
               <span class="role-icon">🎮</span>
               <span class="role-label">Admin</span>
-              <span class="role-desc">Kontrol video</span>
+              <span class="role-desc">Kendalikan video</span>
             </button>
           </div>
           <input type="hidden" id="roleInput" value="viewer" />
@@ -74,7 +70,7 @@
             placeholder="Masukkan PIN rahasia..."
             maxlength="10"
           />
-          <small>Hanya kamu yang tahu PIN ini 🔐</small>
+          <small>Hanya Anda yang mengetahui PIN ini 🔐</small>
         </div>
 
         <button type="submit" class="btn-enter" id="enterBtn">
@@ -85,14 +81,12 @@
         </button>
       </form>
 
-      <!-- Info box -->
       <div class="info-box">
-        <p>🔒 Room ini <strong>privat</strong> — hanya untuk kalian berdua</p>
+        <p>🔒 Ruangan ini <strong>privat</strong> — hanya untuk Anda berdua</p>
       </div>
     </div>
   </main>
 
-  <!-- Firebase -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
@@ -101,7 +95,6 @@
     const app = initializeApp(FIREBASE_CONFIG);
     const auth = getAuth(app);
 
-    // Role selector
     const roleBtns = document.querySelectorAll('.role-btn');
     const roleInput = document.getElementById('roleInput');
     const adminPinGroup = document.getElementById('adminPinGroup');
@@ -115,7 +108,6 @@
       });
     });
 
-    // Login form
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
 
@@ -126,7 +118,7 @@
       if (!name) return;
 
       if (role === 'admin' && pin !== ADMIN_PIN) {
-        alert('❌ PIN salah! Coba lagi.');
+        alert('❌ PIN salah. Silakan coba kembali.');
         return;
       }
 
@@ -142,7 +134,7 @@
         window.location.href = 'watch.html';
       } catch (err) {
         console.error(err);
-        alert('Gagal masuk. Cek koneksi internet kamu.');
+        alert('Gagal masuk. Periksa koneksi internet Anda.');
         btn.querySelector('.btn-text').style.display = 'block';
         btn.querySelector('.btn-loader').style.display = 'none';
         btn.disabled = false;
@@ -152,7 +144,7 @@
     // Background particles
     const container = document.getElementById('bgParticles');
     const symbols = ['🎬', '🍿', '💕', '⭐', '🎞️', '✨', '🎭', '❤️'];
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 18; i++) {
       const el = document.createElement('div');
       el.className = 'particle';
       el.textContent = symbols[Math.floor(Math.random() * symbols.length)];
@@ -161,8 +153,8 @@
         top: ${Math.random() * 100}%;
         animation-delay: ${Math.random() * 5}s;
         animation-duration: ${4 + Math.random() * 4}s;
-        font-size: ${14 + Math.random() * 16}px;
-        opacity: ${0.05 + Math.random() * 0.15};
+        font-size: ${14 + Math.random() * 14}px;
+        opacity: ${0.05 + Math.random() * 0.12};
       `;
       container.appendChild(el);
     }

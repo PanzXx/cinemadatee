@@ -2,8 +2,10 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CinemaDate 🎬 — Nonton Bareng</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>CinemaDate 🎬 — Menonton Bersama</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
@@ -18,54 +20,40 @@
     <div class="topbar-logo">Cinema<em>Date</em> 🎬</div>
 
     <div class="topbar-status">
-      <!-- Partner status -->
       <div class="status-pill" id="partnerStatus">
         <div class="status-dot" id="partnerDot"></div>
         <span id="partnerName">Menunggu pasangan...</span>
       </div>
-      <!-- Movie title -->
-      <div class="status-pill" id="movieTitlePill" style="max-width:180px; overflow:hidden;">
-        🎞️ <span id="movieTitleText" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+      <div class="status-pill" id="movieTitlePill">
+        🎞️ <span id="movieTitleText"></span>
       </div>
     </div>
 
     <div class="topbar-actions">
-      <span class="badge-role" id="roleBadge">Viewer</span>
+      <span class="badge-role" id="roleBadge">Penonton</span>
     </div>
   </header>
 
   <!-- ===================== VIDEO SECTION ===================== -->
   <section class="video-section">
     <div class="video-wrapper">
-      <!-- Main video element -->
-      <video
-        id="mainVideo"
-        preload="auto"
-        playsinline
-      ></video>
-
-      <!-- Locks viewer from directly touching controls -->
+      <video id="mainVideo" preload="auto" playsinline></video>
       <div class="viewer-overlay" id="viewerOverlay"></div>
 
-      <!-- Sync overlay (shown during seek sync) -->
       <div class="sync-overlay" id="syncOverlay">
         <div class="sync-message">
           <div class="sync-spinner"></div>
           <h3>Menyinkronkan... ⏳</h3>
-          <p>Tunggu sebentar ya sayang</p>
+          <p>Mohon tunggu sebentar</p>
         </div>
       </div>
 
-      <!-- Heart canvas -->
       <canvas id="heartCanvas"></canvas>
-
-      <!-- Reaction toast -->
       <div class="reaction-toast" id="reactionToast"></div>
     </div>
 
     <!-- Video Controls -->
     <div class="video-controls">
-      <!-- Progress bar -->
       <div class="progress-container">
         <span id="timeCurrentDisplay">0:00</span>
         <div class="progress-bar-wrapper" id="progressBarWrapper">
@@ -76,56 +64,54 @@
         <span id="timeDurationDisplay">0:00</span>
       </div>
 
-      <!-- Controls row -->
       <div class="controls-row">
-        <!-- Play/Pause -->
-        <button class="ctrl-btn play-btn" id="playPauseBtn" title="Play/Pause">▶</button>
-
-        <!-- Skip back 10s -->
+        <button class="ctrl-btn play-btn" id="playPauseBtn" title="Putar / Jeda">▶</button>
         <button class="ctrl-btn" id="skipBackBtn" title="Mundur 10 detik">⏪ 10s</button>
-
-        <!-- Skip forward 10s -->
         <button class="ctrl-btn" id="skipFwdBtn" title="Maju 10 detik">10s ⏩</button>
 
-        <!-- Volume -->
-        <span style="font-size:1.1rem; opacity:0.7;">🔊</span>
+        <span class="volume-icon" style="font-size:1rem; opacity:0.6; flex-shrink:0;">🔊</span>
         <input type="range" class="volume-slider" id="volumeSlider" min="0" max="1" step="0.05" value="1" />
 
         <div class="spacer"></div>
 
-        <!-- Reaction bar -->
         <div class="reaction-bar">
           <button class="reaction-btn" data-reaction="😂" title="Haha">😂</button>
           <button class="reaction-btn" data-reaction="😱" title="Kaget">😱</button>
-          <button class="reaction-btn" data-reaction="😭" title="Nangis">😭</button>
+          <button class="reaction-btn" data-reaction="😭" title="Terharu">😭</button>
           <button class="reaction-btn" data-reaction="🔥" title="Keren">🔥</button>
         </div>
 
-        <!-- Fullscreen -->
-        <button class="ctrl-btn" id="fullscreenBtn" title="Fullscreen">⛶</button>
+        <button class="ctrl-btn" id="fullscreenBtn" title="Layar Penuh">⛶</button>
       </div>
     </div>
   </section>
 
   <!-- ===================== SIDEBAR ===================== -->
   <aside class="sidebar">
-    <!-- Tabs -->
     <div class="sidebar-tabs">
-      <button class="tab-btn active" data-tab="chat">💬 Chat</button>
-      <button class="tab-btn" data-tab="vibes">✨ Vibes</button>
+      <button class="tab-btn active" data-tab="chat">💬 Percakapan</button>
+      <button class="tab-btn" data-tab="vibes">✨ Ekspresi</button>
     </div>
 
     <!-- CHAT PANEL -->
     <div class="tab-panel active" id="tab-chat">
+      <!-- Chat header with clear options -->
+      <div class="chat-header">
+        <span class="chat-header-title">Pesan</span>
+        <button class="chat-clear-btn" id="chatClearBtn" title="Hapus riwayat percakapan">
+          Hapus Semua
+        </button>
+      </div>
+
       <div class="chat-messages" id="chatMessages">
-        <!-- Messages injected here -->
         <div class="typing-indicator" id="typingIndicator" style="display:none;">
           <div class="typing-dot"></div>
           <div class="typing-dot"></div>
           <div class="typing-dot"></div>
-          <span style="margin-left:4px;">sedang mengetik...</span>
+          <span style="margin-left:4px; font-size:0.75rem;">sedang mengetik...</span>
         </div>
       </div>
+
       <div class="chat-input-area">
         <textarea
           class="chat-input"
@@ -142,53 +128,50 @@
     <div class="tab-panel" id="tab-vibes">
       <div class="vibes-panel">
 
-        <!-- Heart button -->
         <div>
-          <p class="vibes-section-title">Tebar Cinta 💕</p>
+          <p class="vibes-section-title">Kirim Cinta 💕</p>
           <button class="heart-btn-big" id="bigHeartBtn">
             <span class="heart-icon">❤️</span>
-            <span>Kirim Hati ke Dia</span>
+            <span>Kirim Hati</span>
           </button>
         </div>
 
-        <!-- Popcorn -->
         <div>
           <button class="popcorn-btn" id="popcornBtn">
-            🍿 Minta Jeda Popcorn!
+            🍿 Minta Jeda Sebentar
           </button>
         </div>
 
-        <!-- Mood reactions -->
         <div>
-          <p class="vibes-section-title">Ekspresi Perasaan</p>
+          <p class="vibes-section-title">Ekspresi Saat Ini</p>
+          <!-- Emoji only, no text labels -->
           <div class="mood-grid">
-            <button class="mood-btn" data-mood="😂 Ngakak!">
-              <span>😂</span><span>Ngakak!</span>
+            <button class="mood-btn" data-mood="😂" title="Tertawa">
+              <span>😂</span>
             </button>
-            <button class="mood-btn" data-mood="😭 Mewek!">
-              <span>😭</span><span>Mewek!</span>
+            <button class="mood-btn" data-mood="😭" title="Terharu">
+              <span>😭</span>
             </button>
-            <button class="mood-btn" data-mood="😱 Kaget!">
-              <span>😱</span><span>Kaget!</span>
+            <button class="mood-btn" data-mood="😱" title="Terkejut">
+              <span>😱</span>
             </button>
-            <button class="mood-btn" data-mood="🥰 Bucin!">
-              <span>🥰</span><span>Bucin!</span>
+            <button class="mood-btn" data-mood="🥰" title="Bahagia">
+              <span>🥰</span>
             </button>
-            <button class="mood-btn" data-mood="🔥 Keren!">
-              <span>🔥</span><span>Keren!</span>
+            <button class="mood-btn" data-mood="🔥" title="Keren">
+              <span>🔥</span>
             </button>
-            <button class="mood-btn" data-mood="💤 Ngantuk...">
-              <span>💤</span><span>Ngantuk...</span>
+            <button class="mood-btn" data-mood="💤" title="Mengantuk">
+              <span>💤</span>
             </button>
           </div>
         </div>
 
-        <!-- Sync status -->
         <div>
           <p class="vibes-section-title">Status Sinkronisasi</p>
           <div class="sync-status-box">
             <div class="sync-row">
-              <span class="sync-label">Posisi video</span>
+              <span class="sync-label">Posisi Video</span>
               <span class="sync-value" id="syncPosDisplay">0:00</span>
             </div>
             <div class="sync-row">
@@ -208,7 +191,6 @@
 
 </div>
 
-<!-- Firebase CDN -->
 <script type="module" src="js/watch.js"></script>
 
 </body>
