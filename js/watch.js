@@ -253,45 +253,20 @@ function setupPresence() {
 // CHAT
 // ================================================================
 function setupChat() {
-  // 1. Listen to messages & Trigger Danmaku
+  // Listen to messages
   onValue(chatRef, (snapshot) => {
     const data = snapshot.val();
     // Remove existing messages (keep typing indicator)
     chatMessages.querySelectorAll('.chat-msg').forEach(el => el.remove());
     if (!data) return;
-    
     const msgs = Object.entries(data)
       .map(([key, val]) => ({ key, ...val }))
       .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
-      
-    msgs.forEach(msg => {
-      renderChatMessage(msg);
-      
-      // TRIGGER DANMAKU: Cek kalau ini pesan baru, bukan pesan lama
-      if (msg.timestamp && msg.timestamp > lastDanmakuTime) {
-        if (msg.type !== 'system' && !msg.deletedForAll && !localDeletedKeys.has(msg.key)) {
-          spawnDanmaku(msg);
-        }
-      }
-    });
-
-    // Update waktu ke pesan terakhir biar gak spam pas reload
-    if (msgs.length > 0) {
-      const lastMsg = msgs[msgs.length - 1];
-      if (lastMsg.timestamp > lastDanmakuTime) {
-        lastDanmakuTime = lastMsg.timestamp;
-      }
-    }
-    
+    msgs.forEach(msg => renderChatMessage(msg));
     chatMessages.scrollTop = chatMessages.scrollHeight;
   });
 
-  // ==========================================
-  // BAGIAN YANG SEMPET ILANG: LOGIKA KIRIM PESAN
-  // ==========================================
-  
   chatSendBtn.addEventListener('click', sendMessage);
-  
   chatInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); return; }
     clearTimeout(typingTimeout);
@@ -309,15 +284,6 @@ function setupChat() {
     chatInput.style.height = Math.min(chatInput.scrollHeight, 80) + 'px';
   });
 
-  // Clear all chat (admin only)
-  clearAllChatBtn.addEventListener('click', () => {
-    showModal(
-      'Hapus Semua Obrolan',
-      'Seluruh riwayat percakapan akan dihapus untuk kedua pihak. Tindakan ini tidak dapat dibatalkan.',
-      () => { remove(chatRef); }
-    );
-  });
-}
   // Clear all chat (admin only)
   clearAllChatBtn.addEventListener('click', () => {
     showModal(
