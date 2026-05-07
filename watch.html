@@ -37,8 +37,9 @@
 
   <!-- VIDEO SECTION -->
   <section class="video-section">
-    <div class="video-wrapper">
+      <div class="video-wrapper">
       <video id="mainVideo" preload="auto" playsinline webkit-playsinline></video>
+      <div id="danmakuContainer" style="position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 25;"></div>  
       <div class="viewer-overlay" id="viewerOverlay"></div>
       <div class="sync-overlay" id="syncOverlay">
         <div class="sync-message">
@@ -76,6 +77,7 @@
           <button class="reaction-btn" data-reaction="😭">😭</button>
           <button class="reaction-btn" data-reaction="🔥">🔥</button>
         </div>
+        <button class="ctrl-btn" id="toggleSidebarBtn" title="Buka/Tutup Obrolan">💬</button>
         <button class="ctrl-btn" id="fullscreenBtn" title="Layar Penuh">⛶</button>
       </div>
     </div>

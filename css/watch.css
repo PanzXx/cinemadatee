@@ -622,3 +622,41 @@ body.is-viewer .viewer-overlay { display: block; }
   .topbar { padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); }
   .video-controls { padding-bottom: max(12px, env(safe-area-inset-bottom)); }
 }
+
+/* ===========================
+   DANMAKU & SIDEBAR TOGGLE
+   =========================== */
+
+/* Mode Sidebar Disembunyikan */
+.app-shell.hide-sidebar {
+  grid-template-columns: 1fr 0px;
+}
+.app-shell.hide-sidebar .sidebar {
+  display: none;
+}
+
+/* Style Chat Mengambang (Danmaku) */
+.danmaku-msg {
+  position: absolute;
+  white-space: nowrap;
+  color: #fff;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 1.1rem;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.8), 0 0 8px rgba(0,0,0,0.6);
+  z-index: 25;
+  pointer-events: none; /* Biar gak ganggu klik video */
+  animation: danmakuMove linear forwards;
+}
+
+@keyframes danmakuMove {
+  from { transform: translateX(100vw); }
+  to { transform: translateX(-100%); }
+}
+
+/* Responsif Mobile untuk toggle sidebar */
+@media (max-width: 768px) {
+  .app-shell.hide-sidebar {
+    grid-template-rows: 48px 1fr 0px;
+  }
+}

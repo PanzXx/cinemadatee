@@ -69,6 +69,10 @@ const modalCancel = document.getElementById('modalCancel');
 const modalConfirm = document.getElementById('modalConfirm');
 const clearAllChatBtn = document.getElementById('clearAllChatBtn');
 const chatActionsBar = document.getElementById('chatActionsBar');
+const toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
+const appShell = document.getElementById('appShell');
+const danmakuContainer = document.getElementById('danmakuContainer');
+let lastDanmakuTime = Date.now(); // Buat ngecek pesan baru
 
 // ================================================================
 // SETUP UI
@@ -249,35 +253,36 @@ function setupPresence() {
 // CHAT
 // ================================================================
 function setupChat() {
-  // Listen to messages
+// Listen to messages
   onValue(chatRef, (snapshot) => {
     const data = snapshot.val();
-    // Remove existing messages (keep typing indicator)
     chatMessages.querySelectorAll('.chat-msg').forEach(el => el.remove());
     if (!data) return;
+    
     const msgs = Object.entries(data)
       .map(([key, val]) => ({ key, ...val }))
       .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
-    msgs.forEach(msg => renderChatMessage(msg));
+      
+    msgs.forEach(msg => {
+      renderChatMessage(msg);
+      
+      // TRIGGER DANMAKU: Cek kalau ini pesan baru, bukan pesan lama
+      if (msg.timestamp && msg.timestamp > lastDanmakuTime) {
+        if (msg.type !== 'system' && !msg.deletedForAll && !localDeletedKeys.has(msg.key)) {
+          spawnDanmaku(msg);
+        }
+      }
+    });
+
+    // Update waktu ke pesan terakhir biar gak spam pas reload
+    if (msgs.length > 0) {
+      const lastMsg = msgs[msgs.length - 1];
+      if (lastMsg.timestamp > lastDanmakuTime) {
+        lastDanmakuTime = lastMsg.timestamp;
+      }
+    }
+    
     chatMessages.scrollTop = chatMessages.scrollHeight;
-  });
-
-  chatSendBtn.addEventListener('click', sendMessage);
-  chatInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); return; }
-    clearTimeout(typingTimeout);
-    set(typingRef, { user: myName, typing: true });
-    typingTimeout = setTimeout(() => set(typingRef, { user: myName, typing: false }), 2000);
-  });
-
-  onValue(typingRef, (snapshot) => {
-    const data = snapshot.val();
-    typingIndicator.style.display = (data && data.typing && data.user !== myName) ? 'flex' : 'none';
-  });
-
-  chatInput.addEventListener('input', () => {
-    chatInput.style.height = 'auto';
-    chatInput.style.height = Math.min(chatInput.scrollHeight, 80) + 'px';
   });
 
   // Clear all chat (admin only)
@@ -546,6 +551,36 @@ function showToast(msg) {
 // ================================================================
 // UTILITY
 // ================================================================
+// Fungsi spawn Danmaku
+function spawnDanmaku(msg) {
+  const el = document.createElement('div');
+  el.className = 'danmaku-msg';
+  el.textContent = `${msg.name}: ${msg.text}`; // Format: "Panji: halo"
+  
+  // Posisi vertikal random biar ga numpuk (10% sampai 80% dari atas)
+  const topPos = 10 + Math.random() * 70;
+  el.style.top = topPos + '%';
+  
+  // Kecepatan jalan random (5 - 9 detik)
+  const duration = 5 + Math.random() * 4;
+  el.style.animationDuration = duration + 's';
+  
+  danmakuContainer.appendChild(el);
+  
+  // Langsung hapus elemen kalau udah selesai jalan
+  el.addEventListener('animationend', () => el.remove());
+}
+
+// Logika Tombol Toggle Sidebar
+toggleSidebarBtn.addEventListener('click', () => {
+  appShell.classList.toggle('hide-sidebar');
+  if(appShell.classList.contains('hide-sidebar')) {
+    toggleSidebarBtn.style.opacity = '0.5'; // Agak redup kalau chat ditutup
+  } else {
+    toggleSidebarBtn.style.opacity = '1';
+  }
+});
+
 function formatTime(secs) {
   if (isNaN(secs) || secs === Infinity) return '0:00';
   const m = Math.floor(secs / 60);
