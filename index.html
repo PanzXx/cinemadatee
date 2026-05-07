@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>CinemaDate 🎬</title>
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>CinemaDate</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
@@ -29,7 +31,7 @@
       <div class="logo">
         <span class="logo-icon">🎬</span>
         <h1 class="logo-text">Cinema<em>Date</em></h1>
-        <p class="logo-tagline">Menonton bersama, meski terpisah jarak 💕</p>
+        <p class="logo-tagline">Ruang nonton privat untuk kalian berdua 💕</p>
       </div>
 
       <form id="loginForm" class="login-form">
@@ -38,7 +40,7 @@
           <input
             type="text"
             id="nameInput"
-            placeholder="Contoh: Zizah..."
+            placeholder="Masukkan nama Anda..."
             maxlength="20"
             required
             autocomplete="off"
@@ -56,7 +58,7 @@
             <button type="button" class="role-btn" data-role="admin">
               <span class="role-icon">🎮</span>
               <span class="role-label">Admin</span>
-              <span class="role-desc">Kendalikan video</span>
+              <span class="role-desc">Kendali video</span>
             </button>
           </div>
           <input type="hidden" id="roleInput" value="viewer" />
@@ -70,7 +72,7 @@
             placeholder="Masukkan PIN rahasia..."
             maxlength="10"
           />
-          <small>Hanya Anda yang mengetahui PIN ini 🔐</small>
+          <small>Hanya Admin yang mengetahui PIN ini 🔐</small>
         </div>
 
         <button type="submit" class="btn-enter" id="enterBtn">
@@ -82,7 +84,7 @@
       </form>
 
       <div class="info-box">
-        <p>🔒 Ruangan ini <strong>privat</strong> — hanya untuk Anda berdua</p>
+        <p>🔒 Ruang ini <strong>privat</strong> — hanya dapat diakses oleh Anda berdua</p>
       </div>
     </div>
   </main>
@@ -110,30 +112,24 @@
 
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-
       const name = document.getElementById('nameInput').value.trim();
       const role = roleInput.value;
       const pin = document.getElementById('adminPin').value;
-
       if (!name) return;
-
       if (role === 'admin' && pin !== ADMIN_PIN) {
-        alert('❌ PIN salah. Silakan coba kembali.');
+        alert('PIN tidak valid. Silakan coba kembali.');
         return;
       }
-
       const btn = document.getElementById('enterBtn');
       btn.querySelector('.btn-text').style.display = 'none';
       btn.querySelector('.btn-loader').style.display = 'flex';
       btn.disabled = true;
-
       try {
         await signInAnonymously(auth);
         sessionStorage.setItem('cdName', name);
         sessionStorage.setItem('cdRole', role);
         window.location.href = 'watch.html';
       } catch (err) {
-        console.error(err);
         alert('Gagal masuk. Periksa koneksi internet Anda.');
         btn.querySelector('.btn-text').style.display = 'block';
         btn.querySelector('.btn-loader').style.display = 'none';
@@ -141,21 +137,13 @@
       }
     });
 
-    // Background particles
     const container = document.getElementById('bgParticles');
     const symbols = ['🎬', '🍿', '💕', '⭐', '🎞️', '✨', '🎭', '❤️'];
     for (let i = 0; i < 18; i++) {
       const el = document.createElement('div');
       el.className = 'particle';
       el.textContent = symbols[Math.floor(Math.random() * symbols.length)];
-      el.style.cssText = `
-        left: ${Math.random() * 100}%;
-        top: ${Math.random() * 100}%;
-        animation-delay: ${Math.random() * 5}s;
-        animation-duration: ${4 + Math.random() * 4}s;
-        font-size: ${14 + Math.random() * 14}px;
-        opacity: ${0.05 + Math.random() * 0.12};
-      `;
+      el.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*100}%;animation-delay:${Math.random()*5}s;animation-duration:${4+Math.random()*4}s;font-size:${14+Math.random()*14}px;opacity:${0.04+Math.random()*0.12};`;
       container.appendChild(el);
     }
   </script>

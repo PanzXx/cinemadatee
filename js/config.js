@@ -1,41 +1,25 @@
 // ================================================================
-// 🔧 CONFIG FILE — WAJIB DIISI SEBELUM DEPLOY!
+// CONFIG FILE — Wajib diisi sebelum deploy
 // ================================================================
-// Ikuti panduan SETUP.md untuk mendapatkan nilai-nilai ini.
 
 export const FIREBASE_CONFIG = {
-    apiKey: "AIzaSyB_NfgytlcpIHwxI8lgFz8_lfgLODNT8ek",
-    authDomain: "cinemadate-3d85a.firebaseapp.com",
-    databaseURL: "https://cinemadate-3d85a-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "cinemadate-3d85a",
-    storageBucket: "cinemadate-3d85a.firebasestorage.app",
-    messagingSenderId: "865797642348",
-    appId: "1:865797642348:web:f03b9d69c8d7065f86e049"
+  apiKey: "GANTI_DENGAN_API_KEY_KAMU",
+  authDomain: "GANTI.firebaseapp.com",
+  databaseURL: "https://GANTI-default-rtdb.asia-southeast1.firebasedatabase.app/",
+  projectId: "GANTI",
+  storageBucket: "GANTI.appspot.com",
+  messagingSenderId: "GANTI_SENDER_ID",
+  appId: "GANTI_APP_ID"
 };
 
-// PIN untuk masuk sebagai Admin (kamu yang pegang remote)
-// Ganti dengan PIN yang kamu inginkan!
-export const ADMIN_PIN = "121230";
+// PIN untuk masuk sebagai Admin
+export const ADMIN_PIN = "sayang123";
 
-// URL video kamu
-// Cara dapat URL Google Drive:
-// 1. Upload MP4 ke Google Drive
-// 2. Klik kanan → "Get link" → "Anyone with the link"
-// 3. Copy ID dari URL: https://drive.google.com/file/d/[INI_ID_NYA]/view
-// 4. Format URL streaming: https://drive.google.com/uc?export=download&id=ID_KAMU
-//    (untuk file <100MB) ATAU gunakan embedded player untuk file besar:
-//    https://drive.google.com/file/d/ID_KAMU/preview
-//
-// REKOMENDASI TERBAIK: Gunakan Cloudflare Stream (gratis 1000 menit)
-// Atau letakkan MP4 di folder /public project Vercel kamu (max 4.5MB per file... kurang ya)
-// Solusi TERBAIK untuk file besar: archive.org (Internet Archive) - GRATIS UNLIMITED!
-// Upload di: https://archive.org/upload
-// Lalu copy direct link MP4-nya
+// URL video MP4 (dari Internet Archive, Cloudflare Stream, dll)
+export const VIDEO_URL = "GANTI_DENGAN_URL_VIDEO_MP4_KAMU";
 
-export const VIDEO_URL = "https://ia600709.us.archive.org/35/items/d-21-fun-the-notebook-2004/D21_FUN-The-notebook-2004.mp4";
+// Judul film
+export const MOVIE_TITLE = "Judul Film Kita 🎬";
 
-// Nama film (untuk ditampilkan di UI)
-export const MOVIE_TITLE = "The Notebook (2004)";
-
-// Room ID (ubah jika ingin sesi baru)
-export const ROOM_ID = "2032023";
+// Room ID
+export const ROOM_ID = "our-private-cinema-room";
