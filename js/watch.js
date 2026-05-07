@@ -253,9 +253,10 @@ function setupPresence() {
 // CHAT
 // ================================================================
 function setupChat() {
-// Listen to messages
+  // 1. Listen to messages & Trigger Danmaku
   onValue(chatRef, (snapshot) => {
     const data = snapshot.val();
+    // Remove existing messages (keep typing indicator)
     chatMessages.querySelectorAll('.chat-msg').forEach(el => el.remove());
     if (!data) return;
     
@@ -285,6 +286,38 @@ function setupChat() {
     chatMessages.scrollTop = chatMessages.scrollHeight;
   });
 
+  // ==========================================
+  // BAGIAN YANG SEMPET ILANG: LOGIKA KIRIM PESAN
+  // ==========================================
+  
+  chatSendBtn.addEventListener('click', sendMessage);
+  
+  chatInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); return; }
+    clearTimeout(typingTimeout);
+    set(typingRef, { user: myName, typing: true });
+    typingTimeout = setTimeout(() => set(typingRef, { user: myName, typing: false }), 2000);
+  });
+
+  onValue(typingRef, (snapshot) => {
+    const data = snapshot.val();
+    typingIndicator.style.display = (data && data.typing && data.user !== myName) ? 'flex' : 'none';
+  });
+
+  chatInput.addEventListener('input', () => {
+    chatInput.style.height = 'auto';
+    chatInput.style.height = Math.min(chatInput.scrollHeight, 80) + 'px';
+  });
+
+  // Clear all chat (admin only)
+  clearAllChatBtn.addEventListener('click', () => {
+    showModal(
+      'Hapus Semua Obrolan',
+      'Seluruh riwayat percakapan akan dihapus untuk kedua pihak. Tindakan ini tidak dapat dibatalkan.',
+      () => { remove(chatRef); }
+    );
+  });
+}
   // Clear all chat (admin only)
   clearAllChatBtn.addEventListener('click', () => {
     showModal(
