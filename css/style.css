@@ -1,0 +1,344 @@
+/* ===========================
+   CSS VARIABLES & RESET
+   =========================== */
+:root {
+  --bg-dark: #0a0a0f;
+  --bg-card: #13131a;
+  --bg-elevated: #1c1c27;
+  --accent-primary: #e8b4c8;   /* Dusty rose */
+  --accent-secondary: #c4a8e8; /* Soft lavender */
+  --accent-gold: #f0d080;      /* Warm gold */
+  --text-primary: #f0ece8;
+  --text-muted: #7a7585;
+  --text-soft: #b8b0c4;
+  --border: rgba(255,255,255,0.07);
+  --border-focus: rgba(232, 180, 200, 0.5);
+  --glow-rose: rgba(232, 180, 200, 0.15);
+  --glow-lavender: rgba(196, 168, 232, 0.15);
+  --shadow-deep: 0 32px 64px rgba(0,0,0,0.6);
+  --shadow-glow: 0 0 40px rgba(232, 180, 200, 0.1);
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body: 'DM Sans', sans-serif;
+  --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html { font-size: 16px; }
+
+body {
+  background: var(--bg-dark);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  min-height: 100vh;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+/* ===========================
+   BACKGROUND
+   =========================== */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 20% 20%, rgba(232,180,200,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 60% at 80% 80%, rgba(196,168,232,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 80% 40% at 50% 100%, rgba(240,208,128,0.04) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.bg-particles {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.particle {
+  position: absolute;
+  animation: floatParticle linear infinite;
+  user-select: none;
+}
+
+@keyframes floatParticle {
+  0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(-110vh) rotate(360deg); opacity: 0; }
+}
+
+/* Film Strip */
+.film-strip {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  width: 28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  align-items: center;
+  padding: 20px 0;
+  z-index: 1;
+  opacity: 0.12;
+}
+
+.film-strip-left { left: 0; background: rgba(240,208,128,0.15); border-right: 1px solid rgba(240,208,128,0.3); }
+.film-strip-right { right: 0; background: rgba(240,208,128,0.15); border-left: 1px solid rgba(240,208,128,0.3); }
+
+.film-hole {
+  width: 14px;
+  height: 10px;
+  background: var(--bg-dark);
+  border-radius: 3px;
+}
+
+/* ===========================
+   LOGIN CONTAINER
+   =========================== */
+.login-container {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 440px;
+  padding: 20px;
+}
+
+.login-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 44px 40px;
+  box-shadow: var(--shadow-deep), var(--shadow-glow);
+  animation: cardReveal 0.8s cubic-bezier(0.2, 0, 0, 1) both;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent-primary), var(--accent-secondary), transparent);
+}
+
+@keyframes cardReveal {
+  from { opacity: 0; transform: translateY(24px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ===========================
+   LOGO
+   =========================== */
+.logo {
+  text-align: center;
+  margin-bottom: 36px;
+}
+
+.logo-icon {
+  font-size: 42px;
+  display: block;
+  margin-bottom: 10px;
+  animation: iconBounce 2s ease-in-out infinite;
+}
+
+@keyframes iconBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.logo-text {
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.logo-text em {
+  font-style: italic;
+  color: var(--accent-primary);
+}
+
+.logo-tagline {
+  margin-top: 8px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 300;
+  letter-spacing: 0.01em;
+}
+
+/* ===========================
+   FORM
+   =========================== */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-soft);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.form-group input[type="text"],
+.form-group input[type="password"] {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  padding: 13px 16px;
+  outline: none;
+  transition: border-color var(--transition), box-shadow var(--transition);
+  width: 100%;
+}
+
+.form-group input::placeholder { color: var(--text-muted); }
+
+.form-group input:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--glow-rose);
+}
+
+.form-group small {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+/* ===========================
+   ROLE SELECTOR
+   =========================== */
+.role-selector {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.role-btn {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-soft);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 10px;
+  transition: all var(--transition);
+  font-family: var(--font-body);
+}
+
+.role-btn:hover {
+  border-color: rgba(232,180,200,0.3);
+  background: rgba(232,180,200,0.05);
+}
+
+.role-btn.active {
+  border-color: var(--accent-primary);
+  background: rgba(232,180,200,0.08);
+  box-shadow: 0 0 20px var(--glow-rose);
+}
+
+.role-icon { font-size: 1.4rem; }
+.role-label { font-size: 0.88rem; font-weight: 500; color: var(--text-primary); }
+.role-desc { font-size: 0.72rem; color: var(--text-muted); }
+
+/* ===========================
+   ENTER BUTTON
+   =========================== */
+.btn-enter {
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  border: none;
+  border-radius: var(--radius-md);
+  color: #1a0f22;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 15px;
+  margin-top: 4px;
+  transition: all var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 52px;
+  box-shadow: 0 4px 20px rgba(232,180,200,0.3);
+}
+
+.btn-enter:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(232,180,200,0.45);
+}
+
+.btn-enter:active:not(:disabled) { transform: translateY(0); }
+
+.btn-enter:disabled { opacity: 0.7; cursor: not-allowed; }
+
+.btn-loader { display: flex; align-items: center; justify-content: center; }
+
+.spinner {
+  width: 20px; height: 20px;
+  border: 2px solid rgba(26,15,34,0.3);
+  border-top-color: #1a0f22;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ===========================
+   INFO BOX
+   =========================== */
+.info-box {
+  margin-top: 24px;
+  padding: 12px 16px;
+  background: rgba(240,208,128,0.05);
+  border: 1px solid rgba(240,208,128,0.15);
+  border-radius: var(--radius-sm);
+  text-align: center;
+}
+
+.info-box p {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.info-box strong { color: var(--accent-gold); }
+
+/* ===========================
+   SCROLLBAR
+   =========================== */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-dark); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }

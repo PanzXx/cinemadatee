@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CinemaDate 🎬</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <!-- Animated background particles -->
+  <div class="bg-particles" id="bgParticles"></div>
+
+  <!-- Floating film strip decoration -->
+  <div class="film-strip film-strip-left">
+    <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+    <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+    <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+    <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+  </div>
+  <div class="film-strip film-strip-right">
+    <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+    <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+    <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+    <div class="film-hole"></div><div class="film-hole"></div><div class="film-hole"></div>
+  </div>
+
+  <main class="login-container">
+    <div class="login-card">
+      <!-- Logo -->
+      <div class="logo">
+        <span class="logo-icon">🎬</span>
+        <h1 class="logo-text">Cinema<em>Date</em></h1>
+        <p class="logo-tagline">Nonton bareng, walau jauh di mata 💕</p>
+      </div>
+
+      <!-- Login Form -->
+      <form id="loginForm" class="login-form">
+        <div class="form-group">
+          <label for="nameInput">Nama kamu</label>
+          <input
+            type="text"
+            id="nameInput"
+            placeholder="Contoh: Reza atau Dinda..."
+            maxlength="20"
+            required
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="roleSelect">Masuk sebagai</label>
+          <div class="role-selector">
+            <button type="button" class="role-btn active" data-role="viewer">
+              <span class="role-icon">💕</span>
+              <span class="role-label">Viewer</span>
+              <span class="role-desc">Nonton bareng</span>
+            </button>
+            <button type="button" class="role-btn" data-role="admin">
+              <span class="role-icon">🎮</span>
+              <span class="role-label">Admin</span>
+              <span class="role-desc">Kontrol video</span>
+            </button>
+          </div>
+          <input type="hidden" id="roleInput" value="viewer" />
+        </div>
+
+        <div class="form-group" id="adminPinGroup" style="display:none;">
+          <label for="adminPin">PIN Admin</label>
+          <input
+            type="password"
+            id="adminPin"
+            placeholder="Masukkan PIN rahasia..."
+            maxlength="10"
+          />
+          <small>Hanya kamu yang tahu PIN ini 🔐</small>
+        </div>
+
+        <button type="submit" class="btn-enter" id="enterBtn">
+          <span class="btn-text">Masuk ke Bioskop 🍿</span>
+          <div class="btn-loader" style="display:none;">
+            <div class="spinner"></div>
+          </div>
+        </button>
+      </form>
+
+      <!-- Info box -->
+      <div class="info-box">
+        <p>🔒 Room ini <strong>privat</strong> — hanya untuk kalian berdua</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { FIREBASE_CONFIG, ADMIN_PIN } from "./js/config.js";
+
+    const app = initializeApp(FIREBASE_CONFIG);
+    const auth = getAuth(app);
+
+    // Role selector
+    const roleBtns = document.querySelectorAll('.role-btn');
+    const roleInput = document.getElementById('roleInput');
+    const adminPinGroup = document.getElementById('adminPinGroup');
+
+    roleBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        roleBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        roleInput.value = btn.dataset.role;
+        adminPinGroup.style.display = btn.dataset.role === 'admin' ? 'block' : 'none';
+      });
+    });
+
+    // Login form
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const name = document.getElementById('nameInput').value.trim();
+      const role = roleInput.value;
+      const pin = document.getElementById('adminPin').value;
+
+      if (!name) return;
+
+      if (role === 'admin' && pin !== ADMIN_PIN) {
+        alert('❌ PIN salah! Coba lagi.');
+        return;
+      }
+
+      const btn = document.getElementById('enterBtn');
+      btn.querySelector('.btn-text').style.display = 'none';
+      btn.querySelector('.btn-loader').style.display = 'flex';
+      btn.disabled = true;
+
+      try {
+        await signInAnonymously(auth);
+        sessionStorage.setItem('cdName', name);
+        sessionStorage.setItem('cdRole', role);
+        window.location.href = 'watch.html';
+      } catch (err) {
+        console.error(err);
+        alert('Gagal masuk. Cek koneksi internet kamu.');
+        btn.querySelector('.btn-text').style.display = 'block';
+        btn.querySelector('.btn-loader').style.display = 'none';
+        btn.disabled = false;
+      }
+    });
+
+    // Background particles
+    const container = document.getElementById('bgParticles');
+    const symbols = ['🎬', '🍿', '💕', '⭐', '🎞️', '✨', '🎭', '❤️'];
+    for (let i = 0; i < 20; i++) {
+      const el = document.createElement('div');
+      el.className = 'particle';
+      el.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+      el.style.cssText = `
+        left: ${Math.random() * 100}%;
+        top: ${Math.random() * 100}%;
+        animation-delay: ${Math.random() * 5}s;
+        animation-duration: ${4 + Math.random() * 4}s;
+        font-size: ${14 + Math.random() * 16}px;
+        opacity: ${0.05 + Math.random() * 0.15};
+      `;
+      container.appendChild(el);
+    }
+  </script>
+</body>
+</html>

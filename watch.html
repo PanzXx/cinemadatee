@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CinemaDate 🎬 — Nonton Bareng</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/watch.css" />
+</head>
+<body>
+
+<div class="app-shell" id="appShell">
+
+  <!-- ===================== TOPBAR ===================== -->
+  <header class="topbar">
+    <div class="topbar-logo">Cinema<em>Date</em> 🎬</div>
+
+    <div class="topbar-status">
+      <!-- Partner status -->
+      <div class="status-pill" id="partnerStatus">
+        <div class="status-dot" id="partnerDot"></div>
+        <span id="partnerName">Menunggu pasangan...</span>
+      </div>
+      <!-- Movie title -->
+      <div class="status-pill" id="movieTitlePill" style="max-width:180px; overflow:hidden;">
+        🎞️ <span id="movieTitleText" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+      </div>
+    </div>
+
+    <div class="topbar-actions">
+      <span class="badge-role" id="roleBadge">Viewer</span>
+    </div>
+  </header>
+
+  <!-- ===================== VIDEO SECTION ===================== -->
+  <section class="video-section">
+    <div class="video-wrapper">
+      <!-- Main video element -->
+      <video
+        id="mainVideo"
+        preload="auto"
+        playsinline
+      ></video>
+
+      <!-- Locks viewer from directly touching controls -->
+      <div class="viewer-overlay" id="viewerOverlay"></div>
+
+      <!-- Sync overlay (shown during seek sync) -->
+      <div class="sync-overlay" id="syncOverlay">
+        <div class="sync-message">
+          <div class="sync-spinner"></div>
+          <h3>Menyinkronkan... ⏳</h3>
+          <p>Tunggu sebentar ya sayang</p>
+        </div>
+      </div>
+
+      <!-- Heart canvas -->
+      <canvas id="heartCanvas"></canvas>
+
+      <!-- Reaction toast -->
+      <div class="reaction-toast" id="reactionToast"></div>
+    </div>
+
+    <!-- Video Controls -->
+    <div class="video-controls">
+      <!-- Progress bar -->
+      <div class="progress-container">
+        <span id="timeCurrentDisplay">0:00</span>
+        <div class="progress-bar-wrapper" id="progressBarWrapper">
+          <div class="progress-fill" id="progressFill" style="width:0%">
+            <div class="progress-thumb"></div>
+          </div>
+        </div>
+        <span id="timeDurationDisplay">0:00</span>
+      </div>
+
+      <!-- Controls row -->
+      <div class="controls-row">
+        <!-- Play/Pause -->
+        <button class="ctrl-btn play-btn" id="playPauseBtn" title="Play/Pause">▶</button>
+
+        <!-- Skip back 10s -->
+        <button class="ctrl-btn" id="skipBackBtn" title="Mundur 10 detik">⏪ 10s</button>
+
+        <!-- Skip forward 10s -->
+        <button class="ctrl-btn" id="skipFwdBtn" title="Maju 10 detik">10s ⏩</button>
+
+        <!-- Volume -->
+        <span style="font-size:1.1rem; opacity:0.7;">🔊</span>
+        <input type="range" class="volume-slider" id="volumeSlider" min="0" max="1" step="0.05" value="1" />
+
+        <div class="spacer"></div>
+
+        <!-- Reaction bar -->
+        <div class="reaction-bar">
+          <button class="reaction-btn" data-reaction="😂" title="Haha">😂</button>
+          <button class="reaction-btn" data-reaction="😱" title="Kaget">😱</button>
+          <button class="reaction-btn" data-reaction="😭" title="Nangis">😭</button>
+          <button class="reaction-btn" data-reaction="🔥" title="Keren">🔥</button>
+        </div>
+
+        <!-- Fullscreen -->
+        <button class="ctrl-btn" id="fullscreenBtn" title="Fullscreen">⛶</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== SIDEBAR ===================== -->
+  <aside class="sidebar">
+    <!-- Tabs -->
+    <div class="sidebar-tabs">
+      <button class="tab-btn active" data-tab="chat">💬 Chat</button>
+      <button class="tab-btn" data-tab="vibes">✨ Vibes</button>
+    </div>
+
+    <!-- CHAT PANEL -->
+    <div class="tab-panel active" id="tab-chat">
+      <div class="chat-messages" id="chatMessages">
+        <!-- Messages injected here -->
+        <div class="typing-indicator" id="typingIndicator" style="display:none;">
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+          <span style="margin-left:4px;">sedang mengetik...</span>
+        </div>
+      </div>
+      <div class="chat-input-area">
+        <textarea
+          class="chat-input"
+          id="chatInput"
+          placeholder="Kirim pesan..."
+          rows="1"
+          maxlength="500"
+        ></textarea>
+        <button class="chat-send-btn" id="chatSendBtn">➤</button>
+      </div>
+    </div>
+
+    <!-- VIBES PANEL -->
+    <div class="tab-panel" id="tab-vibes">
+      <div class="vibes-panel">
+
+        <!-- Heart button -->
+        <div>
+          <p class="vibes-section-title">Tebar Cinta 💕</p>
+          <button class="heart-btn-big" id="bigHeartBtn">
+            <span class="heart-icon">❤️</span>
+            <span>Kirim Hati ke Dia</span>
+          </button>
+        </div>
+
+        <!-- Popcorn -->
+        <div>
+          <button class="popcorn-btn" id="popcornBtn">
+            🍿 Minta Jeda Popcorn!
+          </button>
+        </div>
+
+        <!-- Mood reactions -->
+        <div>
+          <p class="vibes-section-title">Ekspresi Perasaan</p>
+          <div class="mood-grid">
+            <button class="mood-btn" data-mood="😂 Ngakak!">
+              <span>😂</span><span>Ngakak!</span>
+            </button>
+            <button class="mood-btn" data-mood="😭 Mewek!">
+              <span>😭</span><span>Mewek!</span>
+            </button>
+            <button class="mood-btn" data-mood="😱 Kaget!">
+              <span>😱</span><span>Kaget!</span>
+            </button>
+            <button class="mood-btn" data-mood="🥰 Bucin!">
+              <span>🥰</span><span>Bucin!</span>
+            </button>
+            <button class="mood-btn" data-mood="🔥 Keren!">
+              <span>🔥</span><span>Keren!</span>
+            </button>
+            <button class="mood-btn" data-mood="💤 Ngantuk...">
+              <span>💤</span><span>Ngantuk...</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Sync status -->
+        <div>
+          <p class="vibes-section-title">Status Sinkronisasi</p>
+          <div class="sync-status-box">
+            <div class="sync-row">
+              <span class="sync-label">Posisi video</span>
+              <span class="sync-value" id="syncPosDisplay">0:00</span>
+            </div>
+            <div class="sync-row">
+              <span class="sync-label">Status</span>
+              <span class="sync-value good" id="syncStatusDisplay">Tersinkron ✓</span>
+            </div>
+            <div class="sync-row">
+              <span class="sync-label">Koneksi</span>
+              <span class="sync-value good" id="connStatusDisplay">Online 🟢</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </aside>
+
+</div>
+
+<!-- Firebase CDN -->
+<script type="module" src="js/watch.js"></script>
+
+</body>
+</html>
