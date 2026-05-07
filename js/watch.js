@@ -69,10 +69,13 @@ const modalCancel = document.getElementById('modalCancel');
 const modalConfirm = document.getElementById('modalConfirm');
 const clearAllChatBtn = document.getElementById('clearAllChatBtn');
 const chatActionsBar = document.getElementById('chatActionsBar');
+
+// Elemen untuk fitur Danmaku & Toggle Sidebar
 const toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
 const appShell = document.getElementById('appShell');
 const danmakuContainer = document.getElementById('danmakuContainer');
-let lastDanmakuTime = Date.now(); // Buat ngecek pesan baru
+let seenMessages = new Set(); // Buat nyatet ID pesan yang udah masuk (mencegah duplikat Danmaku)
+let isFirstLoad = true; // Biar pas baru buka room, chat lama ga meluncur semua sebagai Danmaku
 
 // ================================================================
 // SETUP UI
@@ -252,16 +255,17 @@ function setupPresence() {
 // ================================================================
 // CHAT
 // ================================================================
-// ================================================================
-// CHAT
-// ================================================================
 function setupChat() {
   // 1. Listen to messages & Danmaku
   onValue(chatRef, (snapshot) => {
     const data = snapshot.val();
     // Hapus pesan lama biar gak dobel (kecuali typing indicator)
     chatMessages.querySelectorAll('.chat-msg').forEach(el => el.remove());
-    if (!data) return;
+    
+    if (!data) {
+      isFirstLoad = false;
+      return;
+    }
     
     const msgs = Object.entries(data)
       .map(([key, val]) => ({ key, ...val }))
@@ -270,26 +274,23 @@ function setupChat() {
     msgs.forEach(msg => {
       renderChatMessage(msg);
       
-      // TRIGGER DANMAKU: Cek kalau ini pesan baru, bukan pesan lama
-      if (msg.timestamp && msg.timestamp > lastDanmakuTime) {
+      // TRIGGER DANMAKU: Cek lewat tracking key pesan (akurat 100%)
+      if (!isFirstLoad && !seenMessages.has(msg.key)) {
         if (msg.type !== 'system' && !msg.deletedForAll && !localDeletedKeys.has(msg.key)) {
           spawnDanmaku(msg);
         }
       }
+      
+      // Catat pesan ini biar ga di-spawn ulang
+      seenMessages.add(msg.key);
     });
 
-    // Update waktu ke pesan terakhir biar gak spam pas reload
-    if (msgs.length > 0) {
-      const lastMsg = msgs[msgs.length - 1];
-      if (lastMsg.timestamp > lastDanmakuTime) {
-        lastDanmakuTime = lastMsg.timestamp;
-      }
-    }
-    
+    // Load pertama beres, setel false biar pesan berikutnya bisa jadi Danmaku
+    isFirstLoad = false;
     chatMessages.scrollTop = chatMessages.scrollHeight;
   });
 
-  // 2. Fungsi Tombol Kirim & Input (Ini yang kemungkinan kehapus tadi bro)
+  // 2. Fungsi Tombol Kirim & Input
   chatSendBtn.addEventListener('click', sendMessage);
   
   chatInput.addEventListener('keydown', (e) => {
@@ -577,8 +578,9 @@ function showToast(msg) {
 }
 
 // ================================================================
-// UTILITY
+// UTILITY & EXTRA FEATURES (DANMAKU & SIDEBAR TOGGLE)
 // ================================================================
+
 // Fungsi spawn Danmaku
 function spawnDanmaku(msg) {
   const el = document.createElement('div');
@@ -593,21 +595,25 @@ function spawnDanmaku(msg) {
   const duration = 5 + Math.random() * 4;
   el.style.animationDuration = duration + 's';
   
-  danmakuContainer.appendChild(el);
+  if(danmakuContainer) {
+      danmakuContainer.appendChild(el);
+  }
   
   // Langsung hapus elemen kalau udah selesai jalan
   el.addEventListener('animationend', () => el.remove());
 }
 
 // Logika Tombol Toggle Sidebar
-toggleSidebarBtn.addEventListener('click', () => {
-  appShell.classList.toggle('hide-sidebar');
-  if(appShell.classList.contains('hide-sidebar')) {
-    toggleSidebarBtn.style.opacity = '0.5'; // Agak redup kalau chat ditutup
-  } else {
-    toggleSidebarBtn.style.opacity = '1';
-  }
-});
+if(toggleSidebarBtn) {
+    toggleSidebarBtn.addEventListener('click', () => {
+      appShell.classList.toggle('hide-sidebar');
+      if(appShell.classList.contains('hide-sidebar')) {
+        toggleSidebarBtn.style.opacity = '0.5'; // Agak redup kalau chat ditutup
+      } else {
+        toggleSidebarBtn.style.opacity = '1';
+      }
+    });
+}
 
 function formatTime(secs) {
   if (isNaN(secs) || secs === Infinity) return '0:00';
