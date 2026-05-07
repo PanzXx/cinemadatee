@@ -252,23 +252,52 @@ function setupPresence() {
 // ================================================================
 // CHAT
 // ================================================================
+// ================================================================
+// CHAT
+// ================================================================
 function setupChat() {
-  // Listen to messages
+  // 1. Listen to messages & Danmaku
   onValue(chatRef, (snapshot) => {
     const data = snapshot.val();
-    // Remove existing messages (keep typing indicator)
+    // Hapus pesan lama biar gak dobel (kecuali typing indicator)
     chatMessages.querySelectorAll('.chat-msg').forEach(el => el.remove());
     if (!data) return;
+    
     const msgs = Object.entries(data)
       .map(([key, val]) => ({ key, ...val }))
       .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
-    msgs.forEach(msg => renderChatMessage(msg));
+      
+    msgs.forEach(msg => {
+      renderChatMessage(msg);
+      
+      // TRIGGER DANMAKU: Cek kalau ini pesan baru, bukan pesan lama
+      if (msg.timestamp && msg.timestamp > lastDanmakuTime) {
+        if (msg.type !== 'system' && !msg.deletedForAll && !localDeletedKeys.has(msg.key)) {
+          spawnDanmaku(msg);
+        }
+      }
+    });
+
+    // Update waktu ke pesan terakhir biar gak spam pas reload
+    if (msgs.length > 0) {
+      const lastMsg = msgs[msgs.length - 1];
+      if (lastMsg.timestamp > lastDanmakuTime) {
+        lastDanmakuTime = lastMsg.timestamp;
+      }
+    }
+    
     chatMessages.scrollTop = chatMessages.scrollHeight;
   });
 
+  // 2. Fungsi Tombol Kirim & Input (Ini yang kemungkinan kehapus tadi bro)
   chatSendBtn.addEventListener('click', sendMessage);
+  
   chatInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); return; }
+    if (e.key === 'Enter' && !e.shiftKey) { 
+      e.preventDefault(); 
+      sendMessage(); 
+      return; 
+    }
     clearTimeout(typingTimeout);
     set(typingRef, { user: myName, typing: true });
     typingTimeout = setTimeout(() => set(typingRef, { user: myName, typing: false }), 2000);
