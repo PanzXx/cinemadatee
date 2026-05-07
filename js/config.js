@@ -32,7 +32,7 @@ export const ADMIN_PIN = "121230";
 // Upload di: https://archive.org/upload
 // Lalu copy direct link MP4-nya
 
-export const VIDEO_URL = "https://archive.org/details/d-21-fun-the-notebook-2004";
+export const VIDEO_URL = "https://ia600709.us.archive.org/35/items/d-21-fun-the-notebook-2004/D21_FUN-The-notebook-2004.mp4";
 
 // Nama film (untuk ditampilkan di UI)
 export const MOVIE_TITLE = "The Notebook (2004)";
