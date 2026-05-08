@@ -32,10 +32,10 @@ export const ADMIN_PIN = "121230";
 // Upload di: https://archive.org/upload
 // Lalu copy direct link MP4-nya
 
-export const VIDEO_URL = "https://ia600709.us.archive.org/35/items/d-21-fun-the-notebook-2004/D21_FUN-The-notebook-2004.mp4";
+export const VIDEO_URL = "https://ia601805.us.archive.org/9/items/d-21-fun-lust-caution-2007/D21_FUN-Lust-caution-2007.mp4";
 
 // Nama film (untuk ditampilkan di UI)
-export const MOVIE_TITLE = "The Notebook (2004)";
+export const MOVIE_TITLE = "ZIZAH PACARKU";
 
 // Room ID (ubah jika ingin sesi baru)
 export const ROOM_ID = "2032023";
