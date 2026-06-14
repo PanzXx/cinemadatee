@@ -33,7 +33,7 @@ export const ADMIN_PIN = "121230";
 // Lalu copy direct link MP4-nya
 
 //export const VIDEO_URL = "https://ia601805.us.archive.org/9/items/d-21-fun-lust-caution-2007/D21_FUN-Lust-caution-2007.mp4";
-export const VIDEO_URL = "https://ia601605.us.archive.org/7/items/inside-out-2-2024-bluray_X_e868e9eb/inside-out-2-2024-bluray_X_e868e9eb.mp4";
+export const VIDEO_URL = "https://ia601502.us.archive.org/18/items/d-21-fun-son-mask-2005/D21_FUN-Son-mask-2005.mp4";
 
 // Nama film (untuk ditampilkan di UI)
 export const MOVIE_TITLE = "Sayang Zizah";
